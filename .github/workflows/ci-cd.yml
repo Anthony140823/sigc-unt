@@ -1,0 +1,255 @@
+# .github/workflows/ci-cd.yml
+# SIGC-UNT — Pipeline CI/CD con GitHub Actions
+# Ejecuta en: push a main/develop, Pull Requests a main
+
+name: SIGC-UNT CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io
+  BACKEND_IMAGE: ${{ github.repository }}/sigc-backend
+  FRONTEND_IMAGE: ${{ github.repository }}/sigc-frontend
+
+jobs:
+  # ══════════════════════════════════════════════════
+  # JOB 1: LINT Y TESTS DEL BACKEND
+  # ══════════════════════════════════════════════════
+  test-backend:
+    name: 🧪 Test Backend
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: sigc_test_db
+          POSTGRES_USER: sigc_test
+          POSTGRES_PASSWORD: test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: 📥 Checkout código
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: 📦 Instalar dependencias
+        run: npm ci
+
+      - name: 🔧 Generar cliente Prisma
+        run: npx prisma generate
+        env:
+          DATABASE_URL: postgresql://sigc_test:test_password@localhost:5432/sigc_test_db
+
+      - name: 🔍 Lint
+        run: npm run lint
+
+      - name: 🧪 Tests unitarios
+        run: npm test -- --coverage --passWithNoTests
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://sigc_test:test_password@localhost:5432/sigc_test_db
+          JWT_SECRET: test-secret-for-ci-minimum-32-chars-required
+          JWT_REFRESH_SECRET: test-refresh-secret-for-ci-minimum-32
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+
+      - name: 📊 Subir cobertura
+        uses: codecov/codecov-action@v4
+        with:
+          directory: backend/coverage
+          flags: backend
+        continue-on-error: true
+
+  # ══════════════════════════════════════════════════
+  # JOB 2: LINT Y BUILD DEL FRONTEND
+  # ══════════════════════════════════════════════════
+  test-frontend:
+    name: 🎨 Test Frontend
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: 📥 Checkout código
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 📦 Instalar dependencias
+        run: npm ci
+
+      - name: 🔍 Lint
+        run: npm run lint
+
+      - name: 🏗️ Build de producción
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: https://sigc.unitru.edu.pe/api/v1
+          NEXT_TELEMETRY_DISABLED: 1
+
+  # ══════════════════════════════════════════════════
+  # JOB 3: BUILD Y PUSH DE IMÁGENES DOCKER
+  # Solo en push a main o develop
+  # ══════════════════════════════════════════════════
+  build-images:
+    name: 🐳 Build Docker Images
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend]
+    if: github.event_name == 'push'
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: 📥 Checkout código
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔑 Login al Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🏷️ Metadata imagen Backend
+        id: meta-backend
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      - name: 🏗️ Build y Push imagen Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: ${{ steps.meta-backend.outputs.tags }}
+          labels: ${{ steps.meta-backend.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: 🏷️ Metadata imagen Frontend
+        id: meta-frontend
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      - name: 🏗️ Build y Push imagen Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: ${{ steps.meta-frontend.outputs.tags }}
+          labels: ${{ steps.meta-frontend.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NEXT_PUBLIC_API_URL=https://sigc.unitru.edu.pe/api/v1
+
+  # ══════════════════════════════════════════════════
+  # JOB 4: DEPLOY A PRODUCCIÓN
+  # Solo en push a main
+  # ══════════════════════════════════════════════════
+  deploy-production:
+    name: 🚀 Deploy Producción
+    runs-on: ubuntu-latest
+    needs: [build-images]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+
+    steps:
+      - name: 📥 Checkout código
+        uses: actions/checkout@v4
+
+      - name: 🔑 Configurar SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+
+      - name: 🚀 Deploy en servidor de producción
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << 'ENDSSH'
+            set -e
+            cd /opt/sigc-unt
+            
+            echo "📥 Actualizando código..."
+            git pull origin main
+            
+            echo "🔑 Login al registry..."
+            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            echo "📦 Descargando imágenes..."
+            docker compose pull backend frontend
+            
+            echo "🔄 Reiniciando servicios..."
+            docker compose up -d --no-deps backend frontend nginx
+            
+            echo "🗄️ Aplicando migraciones..."
+            docker compose exec -T backend npx prisma migrate deploy
+            
+            echo "🏥 Verificando salud de servicios..."
+            sleep 10
+            curl -f http://localhost:4000/api/health || exit 1
+            
+            echo "✅ Deploy completado exitosamente"
+          ENDSSH
+
+      - name: 📢 Notificar deploy exitoso
+        if: success()
+        run: |
+          echo "✅ Deploy a producción completado: ${{ github.sha }}"
+          # Aquí se puede integrar notificación a Slack/Teams/email
+
+      - name: 📢 Notificar deploy fallido
+        if: failure()
+        run: |
+          echo "❌ Deploy fallido en: ${{ github.sha }}"

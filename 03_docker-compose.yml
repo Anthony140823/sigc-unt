@@ -1,0 +1,214 @@
+# ============================================================
+# SIGC-UNT — Infraestructura Docker Compose
+# Universidad Nacional de Trujillo
+# ============================================================
+# Uso desarrollo: docker compose -f docker-compose.yml up -d
+# Uso producción: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+version: '3.9'
+
+networks:
+  sigc_red:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+
+volumes:
+  postgres_data:
+  postgres_replica_data:
+  redis_data:
+  minio_data:
+
+services:
+
+  # ─────────────────────────────────────
+  # REVERSE PROXY + SSL
+  # ─────────────────────────────────────
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: sigc_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx-local.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - sigc_red
+    restart: unless-stopped
+
+  # ─────────────────────────────────────
+  # FRONTEND — Next.js
+  # ─────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    container_name: sigc_frontend
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      INTERNAL_API_URL: http://backend:4000/api/v1
+    expose:
+      - "3000"
+    networks:
+      - sigc_red
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/login"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ─────────────────────────────────────
+  # BACKEND — NestJS
+  # ─────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sigc_backend
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=sigc_unt
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: 15m
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_REFRESH_EXPIRES_IN: 7d
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET_DOCS: sigc-documentos
+      MINIO_BUCKET_EVIDENCIAS: sigc-evidencias
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      APP_URL: ${APP_URL}
+    expose:
+      - "4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - sigc_red
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ─────────────────────────────────────
+  # BASE DE DATOS — PostgreSQL 16 Primary
+  # ─────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: sigc_postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./01_sigc_unt_schema.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+    expose:
+      - "5432"
+    networks:
+      - sigc_red
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─────────────────────────────────────
+  # CACHÉ — Redis 7
+  # ─────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: sigc_redis
+    command: redis-server --requirepass ${REDIS_PASSWORD} --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    expose:
+      - "6379"
+    networks:
+      - sigc_red
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ─────────────────────────────────────
+  # ALMACENAMIENTO — MinIO (S3-compatible)
+  # ─────────────────────────────────────
+  minio:
+    image: minio/minio:latest
+    container_name: sigc_minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    volumes:
+      - minio_data:/data
+    expose:
+      - "9000"
+      - "9001"
+    networks:
+      - sigc_red
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # ─────────────────────────────────────
+  # GENERADOR PDF — Puppeteer Service
+  # ─────────────────────────────────────
+  # pdf-service:
+  #   build:
+  #     context: ./apps/pdf-service
+  #     dockerfile: Dockerfile
+  #   container_name: sigc_pdf
+  #   environment:
+  #     PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "false"
+  #   expose:
+  #     - "5000"
+  #   networks:
+  #     - sigc_red
+  #   restart: unless-stopped
+  #   cap_add:
+  #     - SYS_ADMIN  # Requerido por Chromium
+
+# ============================================================
+# ARCHIVO .env REQUERIDO (ejemplo):
+# ============================================================
+# POSTGRES_DB=sigc_unt_db
+# POSTGRES_USER=sigc_user
+# POSTGRES_PASSWORD=<password-seguro>
+# REDIS_PASSWORD=<password-redis>
+# JWT_SECRET=<secret-256-bits>
+# JWT_REFRESH_SECRET=<secret-256-bits-diferente>
+# MINIO_ACCESS_KEY=sigcadmin
+# MINIO_SECRET_KEY=<password-minio>
+# SMTP_HOST=mail.unitru.edu.pe
+# SMTP_PORT=587
+# SMTP_USER=calidad@unitru.edu.pe
+# SMTP_PASS=<password-email>
+# NEXT_PUBLIC_API_URL=https://sigc.unitru.edu.pe/api/v1
+# APP_URL=https://sigc.unitru.edu.pe

@@ -1,0 +1,1098 @@
+// prisma/schema.prisma
+// SIGC-UNT — Prisma Schema
+// Mapea al esquema sigc_unt de PostgreSQL 16+
+// Generado para uso con: npx prisma generate && npx prisma migrate deploy
+
+generator client {
+  provider = "prisma-client-js"
+  // Para mejorar performance en producción
+  // previewFeatures = ["tracing"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // schemas = ["sigc_unt"]  // Habilitar cuando Prisma soporte multi-schema estable
+}
+
+// ══════════════════════════════════════════════════════════════
+// CATÁLOGOS
+// ══════════════════════════════════════════════════════════════
+
+model roles {
+  id              Int       @id @default(autoincrement()) @db.SmallInt
+  codigo          String    @unique @db.VarChar(30)
+  nombre          String    @db.VarChar(80)
+  descripcion     String?   @db.Text
+  nivel_jerarquia Int       @default(99) @db.SmallInt
+  esta_activo     Boolean   @default(true)
+  creado_en       DateTime  @default(now()) @db.Timestamptz
+
+  // Relaciones
+  usuarios_roles  usuarios_roles[]
+}
+
+model estados_flujo {
+  id          Int       @id @default(autoincrement()) @db.SmallInt
+  modulo      String    @db.VarChar(10)
+  codigo      String    @db.VarChar(30)
+  nombre      String    @db.VarChar(80)
+  descripcion String?   @db.Text
+  color_hex   String?   @db.VarChar(7)
+  es_final    Boolean   @default(false)
+  orden       Int       @default(0) @db.SmallInt
+  esta_activo Boolean   @default(true)
+
+  @@unique([modulo, codigo])
+
+  // Relaciones
+  documentos                  documentos[]
+  versiones_documento         versiones_documento[]
+  procesos                    procesos[]
+  auditorias                  auditorias[]
+  planes_auditoria            planes_auditoria[]
+  hallazgos                   hallazgos[]
+  no_conformidades            no_conformidades[]
+  acciones_capa               acciones_capa[]
+  riesgos                     riesgos[]
+  planes_mitigacion           planes_mitigacion[]
+  procesos_acreditacion       procesos_acreditacion[]
+  autoevaluaciones            autoevaluaciones[]
+  encuestas                   encuestas[]
+}
+
+model tipos_documento {
+  id                  Int       @id @default(autoincrement()) @db.SmallInt
+  codigo              String    @unique @db.VarChar(10)
+  nombre              String    @db.VarChar(80)
+  descripcion         String?   @db.Text
+  prefijo             String?   @db.VarChar(5)
+  requiere_aprobacion Boolean   @default(true)
+  esta_activo         Boolean   @default(true)
+
+  documentos          documentos[]
+}
+
+model tipos_hallazgo {
+  id          Int       @id @default(autoincrement()) @db.SmallInt
+  codigo      String    @unique @db.VarChar(20)
+  nombre      String    @db.VarChar(80)
+  descripcion String?   @db.Text
+  severidad   Int       @db.SmallInt
+  esta_activo Boolean   @default(true)
+
+  hallazgos   hallazgos[]
+}
+
+model niveles_riesgo {
+  id               Int       @id @default(autoincrement()) @db.SmallInt
+  codigo           String    @unique @db.VarChar(10)
+  nombre           String    @db.VarChar(40)
+  rango_min        Decimal   @db.Decimal(5, 2)
+  rango_max        Decimal   @db.Decimal(5, 2)
+  color_hex        String?   @db.VarChar(7)
+  accion_requerida String?   @db.Text
+  esta_activo      Boolean   @default(true)
+
+  riesgos          riesgos[]
+}
+
+model tipos_auditoria {
+  id          Int       @id @default(autoincrement()) @db.SmallInt
+  codigo      String    @unique @db.VarChar(20)
+  nombre      String    @db.VarChar(80)
+  descripcion String?   @db.Text
+  esta_activo Boolean   @default(true)
+
+  auditorias  auditorias[]
+  checklists  checklists[]
+}
+
+model tipos_pregunta {
+  id             Int       @id @default(autoincrement()) @db.SmallInt
+  codigo         String    @unique @db.VarChar(20)
+  nombre         String    @db.VarChar(60)
+  descripcion    String?   @db.Text
+  tiene_opciones Boolean   @default(false)
+
+  preguntas_encuesta preguntas_encuesta[]
+}
+
+model metodos_causa_raiz {
+  id          Int       @id @default(autoincrement()) @db.SmallInt
+  codigo      String    @unique @db.VarChar(20)
+  nombre      String    @db.VarChar(80)
+  descripcion String?   @db.Text
+  esta_activo Boolean   @default(true)
+
+  analisis_causa_raiz analisis_causa_raiz[]
+}
+
+model estandares_acreditacion {
+  id             Int       @id @default(autoincrement()) @db.SmallInt
+  codigo         String    @unique @db.VarChar(20)
+  nombre         String    @db.VarChar(120)
+  organismo      String    @db.VarChar(80)
+  version        String?   @db.VarChar(20)
+  descripcion    String?   @db.Text
+  url_referencia String?   @db.VarChar(500)
+  esta_activo    Boolean   @default(true)
+
+  procesos_acreditacion procesos_acreditacion[]
+  factores_estandar     factores_estandar[]
+}
+
+model frecuencias_medicion {
+  id           Int     @id @default(autoincrement()) @db.SmallInt
+  codigo       String  @unique @db.VarChar(20)
+  nombre       String  @db.VarChar(40)
+  dias_periodo Int?    @db.SmallInt
+
+  indicadores  indicadores[]
+}
+
+// ══════════════════════════════════════════════════════════════
+// MAESTRAS
+// ══════════════════════════════════════════════════════════════
+
+model facultades {
+  id             String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  codigo         String    @unique @db.VarChar(10)
+  nombre         String    @db.VarChar(150)
+  nombre_corto   String?   @db.VarChar(40)
+  decano_nombre  String?   @db.VarChar(200)
+  email          String?   @db.VarChar(100)
+  telefono       String?   @db.VarChar(20)
+  esta_activo    Boolean   @default(true)
+  creado_en      DateTime  @default(now()) @db.Timestamptz
+  modificado_en  DateTime  @default(now()) @db.Timestamptz @updatedAt
+
+  areas                areas[]
+  programas_academicos programas_academicos[]
+}
+
+model areas {
+  id                 String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  codigo             String    @unique @db.VarChar(20)
+  nombre             String    @db.VarChar(200)
+  nombre_corto       String?   @db.VarChar(50)
+  facultad_id        String?   @db.Uuid
+  area_padre_id      String?   @db.Uuid
+  tipo_area          String    @default("OFICINA") @db.VarChar(30)
+  responsable_nombre String?   @db.VarChar(200)
+  email              String?   @db.VarChar(100)
+  esta_activo        Boolean   @default(true)
+  creado_en          DateTime  @default(now()) @db.Timestamptz
+  modificado_en      DateTime  @default(now()) @db.Timestamptz @updatedAt
+  creado_por         String?   @db.Uuid
+  modificado_por     String?   @db.Uuid
+
+  // Auto-relación jerárquica
+  facultades         facultades?  @relation(fields: [facultad_id], references: [id])
+  areas              areas?       @relation("AreaPadre", fields: [area_padre_id], references: [id])
+  other_areas        areas[]      @relation("AreaPadre")
+
+  // Relaciones hacia otras entidades
+  usuarios           usuarios[]
+  procesos           procesos[]
+  documentos         documentos[]
+  indicadores        indicadores[]
+  planes_auditoria   planes_auditoria[]
+  auditorias         auditorias[]
+  hallazgos          hallazgos[]
+  no_conformidades   no_conformidades[]
+  acciones_capa      acciones_capa[]
+  riesgos            riesgos[]
+  encuestas          encuestas[]
+  usuarios_roles     usuarios_roles[]
+  programas_academicos programas_academicos[]
+  matriz_raci        matriz_raci[]
+}
+
+model usuarios {
+  id              String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  codigo_usuario  String    @unique @db.VarChar(20)
+  username        String    @unique @db.VarChar(50)
+  email           String    @unique @db.VarChar(150)
+  password_hash   String    @db.VarChar(255)
+  nombres         String    @db.VarChar(100)
+  apellidos       String    @db.VarChar(100)
+  tipo_usuario    String    @db.VarChar(20)
+  area_id         String?   @db.Uuid
+  cargo           String?   @db.VarChar(200)
+  telefono        String?   @db.VarChar(20)
+  avatar_url      String?   @db.VarChar(500)
+  ldap_dn         String?   @db.VarChar(500)
+  esta_activo     Boolean   @default(true)
+  ultimo_login    DateTime? @db.Timestamptz
+  intentos_login  Int       @default(0) @db.SmallInt
+  bloqueado_hasta DateTime? @db.Timestamptz
+  creado_en       DateTime  @default(now()) @db.Timestamptz
+  modificado_en   DateTime  @default(now()) @db.Timestamptz @updatedAt
+  creado_por      String?   @db.Uuid
+  modificado_por  String?   @db.Uuid
+  eliminado_en    DateTime? @db.Timestamptz
+  eliminado_por   String?   @db.Uuid
+
+  areas               areas?              @relation(fields: [area_id], references: [id])
+  usuarios_roles      usuarios_roles[]
+  tokens_refresco     tokens_refresco[]
+  log_sesiones        log_sesiones[]
+  notificaciones      notificaciones[]
+
+  // Relaciones de auditoría de documentos
+  documentos_creados    documentos[]    @relation("DocumentoCreadoPor")
+  versiones_elaboradas  versiones_documento[] @relation("VersionElaboradaPor")
+  versiones_revisadas   versiones_documento[] @relation("VersionRevisadaPor")
+  versiones_aprobadas   versiones_documento[] @relation("VersionAprobadaPor")
+  aprobaciones          aprobaciones_documento[]
+
+  // Relaciones CAPA / auditorías
+  no_conformidades_detectadas no_conformidades[] @relation("NcDetectadoPor")
+  no_conformidades_creadas    no_conformidades[] @relation("NcCreadoPor")
+  analisis_causa_raiz         analisis_causa_raiz[]
+  acciones_capa               acciones_capa[] @relation("AccionResponsable")
+  acciones_verificadas        acciones_capa[] @relation("AccionVerificadaPor")
+
+  // Indicadores
+  indicadores_responsable   indicadores[]   @relation("IndicadorResponsable")
+  mediciones_registradas    mediciones_indicador[] @relation("MedicionRegistradaPor")
+  mediciones_validadas      mediciones_indicador[] @relation("MedicionValidadaPor")
+
+  // Riesgos
+  riesgos_responsable   riesgos[]       @relation("RiesgoResponsable")
+  seguimientos_riesgo   seguimientos_riesgo[]
+  planes_mitigacion     planes_mitigacion[]
+
+  // Auditorías
+  auditores_asignados   auditores_asignados[]
+  hallazgos_cerrados    hallazgos[]     @relation("HallazgoCerradoPor")
+  respuestas_checklist  respuestas_checklist[]
+
+  // Acreditación
+  autoevaluaciones      autoevaluaciones[]
+  evidencias_subidas    evidencias[]
+
+  // Subprocesos
+  subprocesos           subprocesos[]
+  matriz_raci           matriz_raci[]
+}
+
+model usuarios_roles {
+  id           BigInt    @id @default(autoincrement())
+  usuario_id   String    @db.Uuid
+  rol_id       Int       @db.SmallInt
+  area_id      String?   @db.Uuid
+  fecha_inicio DateTime  @default(now()) @db.Date
+  fecha_fin    DateTime? @db.Date
+  asignado_por String?   @db.Uuid
+  creado_en    DateTime  @default(now()) @db.Timestamptz
+
+  usuarios     usuarios  @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+  roles        roles     @relation(fields: [rol_id], references: [id])
+  areas        areas?    @relation(fields: [area_id], references: [id])
+
+  @@unique([usuario_id, rol_id, area_id])
+}
+
+model programas_academicos {
+  id                     String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  codigo                 String    @unique @db.VarChar(20)
+  nombre                 String    @db.VarChar(200)
+  nivel                  String    @db.VarChar(20)
+  modalidad              String    @default("PRESENCIAL") @db.VarChar(20)
+  facultad_id            String    @db.Uuid
+  area_id                String?   @db.Uuid
+  duracion_ciclos        Int?      @db.SmallInt
+  resolucion_creacion    String?   @db.VarChar(100)
+  fecha_creacion         DateTime? @db.Date
+  estado_licenciamiento  String?   @default("LICENCIADO") @db.VarChar(30)
+  esta_activo            Boolean   @default(true)
+  creado_en              DateTime  @default(now()) @db.Timestamptz
+  modificado_en          DateTime  @default(now()) @db.Timestamptz @updatedAt
+
+  facultades             facultades  @relation(fields: [facultad_id], references: [id])
+  areas                  areas?      @relation(fields: [area_id], references: [id])
+  procesos_acreditacion  procesos_acreditacion[]
+  encuestas              encuestas[]
+}
+
+model tokens_refresco {
+  id          BigInt    @id @default(autoincrement())
+  usuario_id  String    @db.Uuid
+  token_hash  String    @unique @db.VarChar(255)
+  expira_en   DateTime  @db.Timestamptz
+  ip_origen   String?
+  user_agent  String?   @db.Text
+  revocado    Boolean   @default(false)
+  revocado_en DateTime? @db.Timestamptz
+  creado_en   DateTime  @default(now()) @db.Timestamptz
+
+  usuarios    usuarios  @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+}
+
+// ══════════════════════════════════════════════════════════════
+// MÓDULO GD — GESTIÓN DOCUMENTAL
+// ══════════════════════════════════════════════════════════════
+
+model documentos {
+  id                String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  codigo            String    @unique @db.VarChar(30)
+  tipo_documento_id Int       @db.SmallInt
+  titulo            String    @db.VarChar(300)
+  descripcion       String?   @db.Text
+  area_id           String    @db.Uuid
+  proceso_id        String?   @db.Uuid
+  palabras_clave    String[]
+  aplica_a          String[]
+  estado_id         Int       @db.SmallInt
+  version_actual    String    @default("1.0") @db.VarChar(10)
+  esta_activo       Boolean   @default(true)
+  creado_en         DateTime  @default(now()) @db.Timestamptz
+  modificado_en     DateTime  @default(now()) @db.Timestamptz @updatedAt
+  creado_por        String    @db.Uuid
+  modificado_por    String?   @db.Uuid
+  eliminado_en      DateTime? @db.Timestamptz
+  eliminado_por     String?   @db.Uuid
+
+  tipos_documento   tipos_documento @relation(fields: [tipo_documento_id], references: [id])
+  areas             areas           @relation(fields: [area_id], references: [id])
+  estados_flujo     estados_flujo   @relation(fields: [estado_id], references: [id])
+  procesos          procesos?       @relation(fields: [proceso_id], references: [id])
+  usuarios_documentos_creado_porTousuarios usuarios @relation("DocumentoCreadoPor", fields: [creado_por], references: [id])
+
+  versiones_documento  versiones_documento[]
+}
+
+model versiones_documento {
+  id                   String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  documento_id         String    @db.Uuid
+  numero_version       String    @db.VarChar(10)
+  contenido_url        String?   @db.VarChar(500)
+  contenido_texto      String?   @db.Text
+  resumen_cambios      String    @db.Text
+  estado_id            Int       @db.SmallInt
+  es_version_actual    Boolean   @default(false)
+  elaborado_por        String    @db.Uuid
+  revisado_por         String?   @db.Uuid
+  aprobado_por         String?   @db.Uuid
+  fecha_elaboracion    DateTime  @default(now()) @db.Timestamptz
+  fecha_revision       DateTime? @db.Timestamptz
+  fecha_aprobacion     DateTime? @db.Timestamptz
+  fecha_publicacion    DateTime? @db.Timestamptz
+  fecha_vigencia_hasta DateTime? @db.Timestamptz
+  creado_en            DateTime  @default(now()) @db.Timestamptz
+
+  @@unique([documento_id, numero_version])
+
+  documentos      documentos    @relation(fields: [documento_id], references: [id], onDelete: Cascade)
+  estados_flujo   estados_flujo @relation(fields: [estado_id], references: [id])
+  usuarios_versiones_documento_elaborado_porTousuarios usuarios @relation("VersionElaboradaPor", fields: [elaborado_por], references: [id])
+  usuarios_versiones_documento_revisado_porTousuarios  usuarios? @relation("VersionRevisadaPor", fields: [revisado_por], references: [id])
+  usuarios_versiones_documento_aprobado_porTousuarios  usuarios? @relation("VersionAprobadaPor", fields: [aprobado_por], references: [id])
+
+  aprobaciones_documento aprobaciones_documento[]
+}
+
+model aprobaciones_documento {
+  id          BigInt    @id @default(autoincrement())
+  version_id  String    @db.Uuid
+  paso        Int       @db.SmallInt
+  tipo_paso   String    @db.VarChar(20)
+  usuario_id  String    @db.Uuid
+  rol_requerido_id Int? @db.SmallInt
+  accion      String?   @db.VarChar(20)
+  comentarios String?   @db.Text
+  fecha_accion DateTime? @db.Timestamptz
+  creado_en   DateTime  @default(now()) @db.Timestamptz
+
+  versiones_documento versiones_documento @relation(fields: [version_id], references: [id], onDelete: Cascade)
+  usuarios            usuarios            @relation(fields: [usuario_id], references: [id])
+}
+
+// ══════════════════════════════════════════════════════════════
+// MÓDULO MP — MAPA DE PROCESOS
+// ══════════════════════════════════════════════════════════════
+
+model macroprocesos {
+  id          String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  codigo      String    @unique @db.VarChar(15)
+  nombre      String    @db.VarChar(150)
+  tipo        String    @db.VarChar(20)
+  descripcion String?   @db.Text
+  orden       Int       @default(0) @db.SmallInt
+  esta_activo Boolean   @default(true)
+  creado_en   DateTime  @default(now()) @db.Timestamptz
+  modificado_en DateTime @default(now()) @db.Timestamptz @updatedAt
+
+  procesos    procesos[]
+}
+
+model procesos {
+  id                  String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  macroproceso_id     String    @db.Uuid
+  codigo              String    @unique @db.VarChar(20)
+  nombre              String    @db.VarChar(200)
+  objetivo            String?   @db.Text
+  alcance             String?   @db.Text
+  entradas            String[]
+  salidas             String[]
+  area_responsable_id String    @db.Uuid
+  estado_id           Int       @db.SmallInt
+  diagrama_bpmn_url   String?   @db.VarChar(500)
+  diagrama_bpmn_json  Json?
+  orden               Int       @default(0) @db.SmallInt
+  esta_activo         Boolean   @default(true)
+  creado_en           DateTime  @default(now()) @db.Timestamptz
+  modificado_en       DateTime  @default(now()) @db.Timestamptz @updatedAt
+  creado_por          String?   @db.Uuid
+  modificado_por      String?   @db.Uuid
+
+  macroprocesos       macroprocesos @relation(fields: [macroproceso_id], references: [id])
+  areas               areas         @relation(fields: [area_responsable_id], references: [id])
+  estados_flujo       estados_flujo @relation(fields: [estado_id], references: [id])
+
+  subprocesos         subprocesos[]
+  documentos          documentos[]
+  indicadores         indicadores[]
+  auditorias          auditorias[]
+  hallazgos           hallazgos[]
+  no_conformidades    no_conformidades[]
+  riesgos             riesgos[]
+  matriz_raci         matriz_raci[]
+}
+
+model subprocesos {
+  id            String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  proceso_id    String    @db.Uuid
+  codigo        String    @unique @db.VarChar(25)
+  nombre        String    @db.VarChar(200)
+  descripcion   String?   @db.Text
+  responsable_id String?  @db.Uuid
+  orden         Int       @default(0) @db.SmallInt
+  esta_activo   Boolean   @default(true)
+  creado_en     DateTime  @default(now()) @db.Timestamptz
+  modificado_en DateTime  @default(now()) @db.Timestamptz @updatedAt
+
+  procesos      procesos  @relation(fields: [proceso_id], references: [id], onDelete: Cascade)
+  usuarios      usuarios? @relation(fields: [responsable_id], references: [id])
+  matriz_raci   matriz_raci[]
+}
+
+model matriz_raci {
+  id            BigInt    @id @default(autoincrement())
+  proceso_id    String    @db.Uuid
+  subproceso_id String?   @db.Uuid
+  area_id       String    @db.Uuid
+  usuario_id    String?   @db.Uuid
+  rol_raci      String    @db.Char(1)
+  descripcion   String?   @db.Text
+  creado_en     DateTime  @default(now()) @db.Timestamptz
+
+  procesos      procesos      @relation(fields: [proceso_id], references: [id], onDelete: Cascade)
+  subprocesos   subprocesos?  @relation(fields: [subproceso_id], references: [id], onDelete: Cascade)
+  areas         areas         @relation(fields: [area_id], references: [id], onDelete: Cascade)
+  usuarios      usuarios?     @relation(fields: [usuario_id], references: [id])
+}
+
+// ══════════════════════════════════════════════════════════════
+// MÓDULO IG — INDICADORES
+// ══════════════════════════════════════════════════════════════
+
+model objetivos_estrategicos {
+  id          String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  codigo      String    @unique @db.VarChar(20)
+  nombre      String    @db.VarChar(300)
+  descripcion String?   @db.Text
+  perspectiva String?   @db.VarChar(40)
+  anio_pei    Int?      @db.SmallInt
+  esta_activo Boolean   @default(true)
+  creado_en   DateTime  @default(now()) @db.Timestamptz
+  modificado_en DateTime @default(now()) @db.Timestamptz @updatedAt
+
+  indicadores indicadores[]
+  riesgos     riesgos[]
+}
+
+model indicadores {
+  id                    String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  codigo                String    @unique @db.VarChar(20)
+  nombre                String    @db.VarChar(200)
+  descripcion           String?   @db.Text
+  formula               String    @db.Text
+  unidad_medida         String?   @db.VarChar(30)
+  tipo_tendencia        String    @default("MAYOR") @db.VarChar(10)
+  meta_valor            Decimal?  @db.Decimal(15, 4)
+  meta_descripcion      String?   @db.Text
+  frecuencia_id         Int       @db.SmallInt
+  proceso_id            String?   @db.Uuid
+  area_responsable_id   String    @db.Uuid
+  responsable_id        String?   @db.Uuid
+  objetivo_estrategico_id String? @db.Uuid
+  fuente_datos          String?   @db.Text
+  esta_activo           Boolean   @default(true)
+  creado_en             DateTime  @default(now()) @db.Timestamptz
+  modificado_en         DateTime  @default(now()) @db.Timestamptz @updatedAt
+  creado_por            String?   @db.Uuid
+  modificado_por        String?   @db.Uuid
+
+  frecuencias_medicion    frecuencias_medicion    @relation(fields: [frecuencia_id], references: [id])
+  procesos                procesos?               @relation(fields: [proceso_id], references: [id])
+  areas                   areas                   @relation(fields: [area_responsable_id], references: [id])
+  usuarios_indicadores_responsable_idTousuarios usuarios? @relation("IndicadorResponsable", fields: [responsable_id], references: [id])
+  objetivos_estrategicos  objetivos_estrategicos? @relation(fields: [objetivo_estrategico_id], references: [id])
+
+  mediciones_indicador    mediciones_indicador[]
+}
+
+model mediciones_indicador {
+  id              BigInt    @id @default(autoincrement())
+  indicador_id    String    @db.Uuid
+  periodo_inicio  DateTime  @db.Date
+  periodo_fin     DateTime  @db.Date
+  valor_real      Decimal   @db.Decimal(15, 4)
+  valor_meta      Decimal?  @db.Decimal(15, 4)
+  estado_semaforo String    @default("VERDE") @db.VarChar(10)
+  observaciones   String?   @db.Text
+  evidencia_url   String?   @db.VarChar(500)
+  registrado_por  String    @db.Uuid
+  validado_por    String?   @db.Uuid
+  fecha_registro  DateTime  @default(now()) @db.Timestamptz
+  fecha_validacion DateTime? @db.Timestamptz
+
+  indicadores     indicadores @relation(fields: [indicador_id], references: [id])
+  usuarios_mediciones_indicador_registrado_porTousuarios  usuarios  @relation("MedicionRegistradaPor", fields: [registrado_por], references: [id])
+  usuarios_mediciones_indicador_validado_porTousuarios    usuarios? @relation("MedicionValidadaPor", fields: [validado_por], references: [id])
+}
+
+// ══════════════════════════════════════════════════════════════
+// MÓDULO AA — ACREDITACIÓN
+// ══════════════════════════════════════════════════════════════
+
+model procesos_acreditacion {
+  id                      String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  programa_id             String    @db.Uuid
+  estandar_id             Int       @db.SmallInt
+  tipo_proceso            String    @db.VarChar(20)
+  anio_inicio             Int       @db.SmallInt
+  fecha_inicio            DateTime? @db.Date
+  fecha_visita_externa    DateTime? @db.Date
+  fecha_acreditacion      DateTime? @db.Date
+  fecha_vencimiento       DateTime? @db.Date
+  estado_id               Int       @db.SmallInt
+  resolucion_acreditacion String?   @db.VarChar(100)
+  puntuacion_total        Decimal?  @db.Decimal(5, 2)
+  observaciones           String?   @db.Text
+  creado_en               DateTime  @default(now()) @db.Timestamptz
+  modificado_en           DateTime  @default(now()) @db.Timestamptz @updatedAt
+  creado_por              String?   @db.Uuid
+
+  programas_academicos    programas_academicos    @relation(fields: [programa_id], references: [id])
+  estandares_acreditacion estandares_acreditacion @relation(fields: [estandar_id], references: [id])
+  estados_flujo           estados_flujo           @relation(fields: [estado_id], references: [id])
+
+  autoevaluaciones        autoevaluaciones[]
+}
+
+model factores_estandar {
+  id          String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  estandar_id Int       @db.SmallInt
+  codigo      String    @db.VarChar(20)
+  nombre      String    @db.VarChar(200)
+  descripcion String?   @db.Text
+  ponderacion Decimal?  @db.Decimal(5, 2)
+  orden       Int       @default(0) @db.SmallInt
+
+  @@unique([estandar_id, codigo])
+
+  estandares_acreditacion estandares_acreditacion @relation(fields: [estandar_id], references: [id], onDelete: Cascade)
+  criterios_factor        criterios_factor[]
+}
+
+model criterios_factor {
+  id                       String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  factor_id                String    @db.Uuid
+  codigo                   String    @db.VarChar(25)
+  nombre                   String    @db.VarChar(300)
+  descripcion              String?   @db.Text
+  indicadores_requeridos   String?   @db.Text
+  ponderacion              Decimal?  @db.Decimal(5, 2)
+  orden                    Int       @default(0) @db.SmallInt
+
+  @@unique([factor_id, codigo])
+
+  factores_estandar   factores_estandar @relation(fields: [factor_id], references: [id], onDelete: Cascade)
+  autoevaluaciones    autoevaluaciones[]
+}
+
+model autoevaluaciones {
+  id                      String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  proceso_acreditacion_id String    @db.Uuid
+  criterio_id             String    @db.Uuid
+  puntuacion              Decimal?  @db.Decimal(5, 2)
+  nivel_logro             String?   @db.VarChar(20)
+  fortalezas              String?   @db.Text
+  debilidades             String?   @db.Text
+  oportunidades           String?   @db.Text
+  plan_mejora             String?   @db.Text
+  responsable_id          String?   @db.Uuid
+  estado_id               Int       @db.SmallInt
+  fecha_evaluacion        DateTime? @db.Date
+  creado_en               DateTime  @default(now()) @db.Timestamptz
+  modificado_en           DateTime  @default(now()) @db.Timestamptz @updatedAt
+
+  @@unique([proceso_acreditacion_id, criterio_id])
+
+  procesos_acreditacion procesos_acreditacion @relation(fields: [proceso_acreditacion_id], references: [id], onDelete: Cascade)
+  criterios_factor      criterios_factor      @relation(fields: [criterio_id], references: [id])
+  usuarios              usuarios?             @relation(fields: [responsable_id], references: [id])
+  estados_flujo         estados_flujo         @relation(fields: [estado_id], references: [id])
+}
+
+model evidencias {
+  id               String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  entidad_tipo     String    @db.VarChar(30)
+  entidad_id       String    @db.Uuid
+  nombre           String    @db.VarChar(300)
+  descripcion      String?   @db.Text
+  archivo_url      String?   @db.VarChar(500)
+  tipo_mime        String?   @db.VarChar(100)
+  tamano_bytes     BigInt?
+  codigo_evidencia String?   @db.VarChar(30)
+  fecha_documento  DateTime? @db.Date
+  subido_por       String    @db.Uuid
+  creado_en        DateTime  @default(now()) @db.Timestamptz
+
+  usuarios         usuarios  @relation(fields: [subido_por], references: [id])
+}
+
+// ══════════════════════════════════════════════════════════════
+// MÓDULO AI — AUDITORÍAS
+// ══════════════════════════════════════════════════════════════
+
+model planes_auditoria {
+  id                  String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  anio                Int       @db.SmallInt
+  nombre              String    @db.VarChar(200)
+  descripcion         String?   @db.Text
+  area_responsable_id String    @db.Uuid
+  estado_id           Int       @db.SmallInt
+  fecha_aprobacion    DateTime? @db.Date
+  aprobado_por        String?   @db.Uuid
+  creado_en           DateTime  @default(now()) @db.Timestamptz
+  modificado_en       DateTime  @default(now()) @db.Timestamptz @updatedAt
+  creado_por          String?   @db.Uuid
+
+  areas          areas         @relation(fields: [area_responsable_id], references: [id])
+  estados_flujo  estados_flujo @relation(fields: [estado_id], references: [id])
+  auditorias     auditorias[]
+}
+
+model auditorias {
+  id                       String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  plan_id                  String    @db.Uuid
+  tipo_id                  Int       @db.SmallInt
+  codigo                   String    @unique @db.VarChar(20)
+  nombre                   String    @db.VarChar(200)
+  objetivo                 String?   @db.Text
+  alcance                  String?   @db.Text
+  area_auditada_id         String    @db.Uuid
+  proceso_auditado_id      String?   @db.Uuid
+  fecha_programada_inicio  DateTime  @db.Date
+  fecha_programada_fin     DateTime  @db.Date
+  fecha_real_inicio        DateTime? @db.Date
+  fecha_real_fin           DateTime? @db.Date
+  estado_id                Int       @db.SmallInt
+  observaciones            String?   @db.Text
+  informe_url              String?   @db.VarChar(500)
+  creado_en                DateTime  @default(now()) @db.Timestamptz
+  modificado_en            DateTime  @default(now()) @db.Timestamptz @updatedAt
+  creado_por               String?   @db.Uuid
+
+  planes_auditoria   planes_auditoria @relation(fields: [plan_id], references: [id])
+  tipos_auditoria    tipos_auditoria  @relation(fields: [tipo_id], references: [id])
+  areas              areas            @relation(fields: [area_auditada_id], references: [id])
+  procesos           procesos?        @relation(fields: [proceso_auditado_id], references: [id])
+  estados_flujo      estados_flujo    @relation(fields: [estado_id], references: [id])
+
+  auditores_asignados  auditores_asignados[]
+  respuestas_checklist respuestas_checklist[]
+  hallazgos            hallazgos[]
+}
+
+model auditores_asignados {
+  id             BigInt  @id @default(autoincrement())
+  auditoria_id   String  @db.Uuid
+  usuario_id     String  @db.Uuid
+  rol_auditoria  String  @db.VarChar(20)
+
+  @@unique([auditoria_id, usuario_id])
+
+  auditorias  auditorias @relation(fields: [auditoria_id], references: [id], onDelete: Cascade)
+  usuarios    usuarios   @relation(fields: [usuario_id], references: [id])
+}
+
+model checklists {
+  id                String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tipo_auditoria_id Int       @db.SmallInt
+  nombre            String    @db.VarChar(200)
+  descripcion       String?   @db.Text
+  version           String    @default("1.0") @db.VarChar(10)
+  esta_activo       Boolean   @default(true)
+  creado_en         DateTime  @default(now()) @db.Timestamptz
+  creado_por        String?   @db.Uuid
+
+  tipos_auditoria   tipos_auditoria @relation(fields: [tipo_auditoria_id], references: [id])
+  items_checklist   items_checklist[]
+}
+
+model items_checklist {
+  id                   String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  checklist_id         String    @db.Uuid
+  criterio_referencia  String?   @db.VarChar(50)
+  pregunta             String    @db.Text
+  descripcion_ayuda    String?   @db.Text
+  tipo_respuesta       String    @default("SI_NO") @db.VarChar(20)
+  obligatorio          Boolean   @default(true)
+  orden                Int       @default(0) @db.SmallInt
+
+  checklists           checklists @relation(fields: [checklist_id], references: [id], onDelete: Cascade)
+  respuestas_checklist respuestas_checklist[]
+}
+
+model respuestas_checklist {
+  id              String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  auditoria_id    String    @db.Uuid
+  item_id         String    @db.Uuid
+  respuesta       String?   @db.VarChar(10)
+  observacion     String?   @db.Text
+  genera_hallazgo Boolean   @default(false)
+  respondido_por  String?   @db.Uuid
+  fecha_respuesta DateTime  @default(now()) @db.Timestamptz
+
+  @@unique([auditoria_id, item_id])
+
+  auditorias      auditorias      @relation(fields: [auditoria_id], references: [id], onDelete: Cascade)
+  items_checklist items_checklist @relation(fields: [item_id], references: [id])
+  usuarios        usuarios?       @relation(fields: [respondido_por], references: [id])
+}
+
+model hallazgos {
+  id                   String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  auditoria_id         String    @db.Uuid
+  tipo_id              Int       @db.SmallInt
+  codigo               String    @db.VarChar(30)
+  descripcion          String    @db.Text
+  requisito_incumplido String?   @db.Text
+  proceso_id           String?   @db.Uuid
+  area_id              String    @db.Uuid
+  estado_id            Int       @db.SmallInt
+  fecha_deteccion      DateTime  @db.Date
+  fecha_limite_cierre  DateTime? @db.Date
+  fecha_cierre_real    DateTime? @db.Date
+  cerrado_por          String?   @db.Uuid
+  observacion_cierre   String?   @db.Text
+  creado_en            DateTime  @default(now()) @db.Timestamptz
+  modificado_en        DateTime  @default(now()) @db.Timestamptz @updatedAt
+
+  @@unique([auditoria_id, codigo])
+
+  auditorias     auditorias     @relation(fields: [auditoria_id], references: [id])
+  tipos_hallazgo tipos_hallazgo @relation(fields: [tipo_id], references: [id])
+  procesos       procesos?      @relation(fields: [proceso_id], references: [id])
+  areas          areas          @relation(fields: [area_id], references: [id])
+  estados_flujo  estados_flujo  @relation(fields: [estado_id], references: [id])
+  usuarios_hallazgos_cerrado_porTousuarios usuarios? @relation("HallazgoCerradoPor", fields: [cerrado_por], references: [id])
+
+  no_conformidades no_conformidades[]
+}
+
+// ══════════════════════════════════════════════════════════════
+// MÓDULO CAPA
+// ══════════════════════════════════════════════════════════════
+
+model no_conformidades {
+  id                  String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  codigo              String    @unique @db.VarChar(30)
+  origen              String    @db.VarChar(20)
+  hallazgo_id         String?   @db.Uuid
+  descripcion         String    @db.Text
+  requisito_afectado  String?   @db.Text
+  proceso_id          String?   @db.Uuid
+  area_id             String    @db.Uuid
+  detectado_por       String?   @db.Uuid
+  estado_id           Int       @db.SmallInt
+  fecha_deteccion     DateTime  @db.Date
+  creado_en           DateTime  @default(now()) @db.Timestamptz
+  modificado_en       DateTime  @default(now()) @db.Timestamptz @updatedAt
+  creado_por          String    @db.Uuid
+
+  hallazgos       hallazgos?    @relation(fields: [hallazgo_id], references: [id])
+  procesos        procesos?     @relation(fields: [proceso_id], references: [id])
+  areas           areas         @relation(fields: [area_id], references: [id])
+  estados_flujo   estados_flujo @relation(fields: [estado_id], references: [id])
+  usuarios_no_conformidades_detectado_porTousuarios usuarios? @relation("NcDetectadoPor", fields: [detectado_por], references: [id])
+  usuarios_no_conformidades_creado_porTousuarios    usuarios  @relation("NcCreadoPor", fields: [creado_por], references: [id])
+
+  analisis_causa_raiz analisis_causa_raiz[]
+  acciones_capa       acciones_capa[]
+}
+
+model analisis_causa_raiz {
+  id                     String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  nc_id                  String    @db.Uuid
+  metodo_id              Int       @db.SmallInt
+  descripcion_causa      String    @db.Text
+  causa_raiz             String    @db.Text
+  factores_contribuyentes String[]
+  analista_id            String?   @db.Uuid
+  fecha_analisis         DateTime  @db.Date
+  datos_metodo           Json?
+  creado_en              DateTime  @default(now()) @db.Timestamptz
+
+  no_conformidades    no_conformidades  @relation(fields: [nc_id], references: [id], onDelete: Cascade)
+  metodos_causa_raiz  metodos_causa_raiz @relation(fields: [metodo_id], references: [id])
+  usuarios_analisis_causa_raiz_analista_idTousuarios usuarios? @relation(fields: [analista_id], references: [id])
+}
+
+model acciones_capa {
+  id                       String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  nc_id                    String    @db.Uuid
+  tipo_accion              String    @db.VarChar(20)
+  descripcion              String    @db.Text
+  responsable_id           String    @db.Uuid
+  area_id                  String    @db.Uuid
+  fecha_compromiso         DateTime  @db.Date
+  fecha_real_cierre        DateTime? @db.Date
+  porcentaje_avance        Int       @default(0) @db.SmallInt
+  estado_id                Int       @db.SmallInt
+  resultado_esperado       String?   @db.Text
+  resultado_real           String?   @db.Text
+  verificacion_efectividad String?   @db.Text
+  verificado_por           String?   @db.Uuid
+  fecha_verificacion       DateTime? @db.Date
+  recursos_requeridos      String?   @db.Text
+  creado_en                DateTime  @default(now()) @db.Timestamptz
+  modificado_en            DateTime  @default(now()) @db.Timestamptz @updatedAt
+
+  no_conformidades no_conformidades @relation(fields: [nc_id], references: [id])
+  areas            areas            @relation(fields: [area_id], references: [id])
+  estados_flujo    estados_flujo    @relation(fields: [estado_id], references: [id])
+  usuarios_acciones_capa_responsable_idTousuarios usuarios  @relation("AccionResponsable", fields: [responsable_id], references: [id])
+  usuarios_acciones_capa_verificado_porTousuarios usuarios? @relation("AccionVerificadaPor", fields: [verificado_por], references: [id])
+}
+
+// ══════════════════════════════════════════════════════════════
+// MÓDULO GR — RIESGOS
+// ══════════════════════════════════════════════════════════════
+
+model riesgos {
+  id                      String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  codigo                  String    @unique @db.VarChar(25)
+  nombre                  String    @db.VarChar(200)
+  descripcion             String    @db.Text
+  tipo_riesgo             String    @db.VarChar(20)
+  area_id                 String    @db.Uuid
+  proceso_id              String?   @db.Uuid
+  objetivo_estrategico_id String?   @db.Uuid
+  causa                   String?   @db.Text
+  consecuencia            String?   @db.Text
+  probabilidad            Decimal   @db.Decimal(3, 1)
+  impacto                 Decimal   @db.Decimal(3, 1)
+  puntuacion              Decimal?  @db.Decimal(5, 2)
+  nivel_riesgo_id         Int       @db.SmallInt
+  responsable_id          String?   @db.Uuid
+  estado_id               Int       @db.SmallInt
+  activo                  Boolean   @default(true)
+  creado_en               DateTime  @default(now()) @db.Timestamptz
+  modificado_en           DateTime  @default(now()) @db.Timestamptz @updatedAt
+  creado_por              String?   @db.Uuid
+  modificado_por          String?   @db.Uuid
+
+  areas                   areas                   @relation(fields: [area_id], references: [id])
+  procesos                procesos?               @relation(fields: [proceso_id], references: [id])
+  objetivos_estrategicos  objetivos_estrategicos? @relation(fields: [objetivo_estrategico_id], references: [id])
+  niveles_riesgo          niveles_riesgo          @relation(fields: [nivel_riesgo_id], references: [id])
+  estados_flujo           estados_flujo           @relation(fields: [estado_id], references: [id])
+  usuarios_riesgos_responsable_idTousuarios usuarios? @relation("RiesgoResponsable", fields: [responsable_id], references: [id])
+
+  planes_mitigacion  planes_mitigacion[]
+  seguimientos_riesgo seguimientos_riesgo[]
+}
+
+model planes_mitigacion {
+  id                    String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  riesgo_id             String    @db.Uuid
+  tipo_respuesta        String    @db.VarChar(20)
+  descripcion           String    @db.Text
+  responsable_id        String?   @db.Uuid
+  fecha_inicio          DateTime? @db.Date
+  fecha_fin             DateTime? @db.Date
+  estado_id             Int       @db.SmallInt
+  probabilidad_residual Decimal?  @db.Decimal(3, 1)
+  impacto_residual      Decimal?  @db.Decimal(3, 1)
+  creado_en             DateTime  @default(now()) @db.Timestamptz
+  modificado_en         DateTime  @default(now()) @db.Timestamptz @updatedAt
+
+  riesgos        riesgos       @relation(fields: [riesgo_id], references: [id], onDelete: Cascade)
+  usuarios       usuarios?     @relation(fields: [responsable_id], references: [id])
+  estados_flujo  estados_flujo @relation(fields: [estado_id], references: [id])
+}
+
+model seguimientos_riesgo {
+  id                  BigInt    @id @default(autoincrement())
+  riesgo_id           String    @db.Uuid
+  fecha_seguimiento   DateTime  @db.Date
+  probabilidad_actual Decimal   @db.Decimal(3, 1)
+  impacto_actual      Decimal   @db.Decimal(3, 1)
+  estado_control      String    @db.VarChar(20)
+  observaciones       String?   @db.Text
+  registrado_por      String    @db.Uuid
+  creado_en           DateTime  @default(now()) @db.Timestamptz
+
+  riesgos   riesgos  @relation(fields: [riesgo_id], references: [id])
+  usuarios  usuarios @relation(fields: [registrado_por], references: [id])
+}
+
+// ══════════════════════════════════════════════════════════════
+// MÓDULO GS — ENCUESTAS
+// ══════════════════════════════════════════════════════════════
+
+model encuestas {
+  id                  String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  codigo              String    @unique @db.VarChar(20)
+  titulo              String    @db.VarChar(300)
+  descripcion         String?   @db.Text
+  poblacion_objetivo  String    @db.VarChar(30)
+  programa_id         String?   @db.Uuid
+  area_id             String?   @db.Uuid
+  ciclo_academico     String?   @db.VarChar(20)
+  fecha_inicio        DateTime? @db.Timestamptz
+  fecha_fin           DateTime? @db.Timestamptz
+  estado_id           Int       @db.SmallInt
+  es_anonima          Boolean   @default(true)
+  creado_en           DateTime  @default(now()) @db.Timestamptz
+  modificado_en       DateTime  @default(now()) @db.Timestamptz @updatedAt
+  creado_por          String?   @db.Uuid
+
+  programas_academicos programas_academicos? @relation(fields: [programa_id], references: [id])
+  areas                areas?                @relation(fields: [area_id], references: [id])
+  estados_flujo        estados_flujo         @relation(fields: [estado_id], references: [id])
+
+  secciones_encuesta      secciones_encuesta[]
+  participaciones_encuesta participaciones_encuesta[]
+}
+
+model secciones_encuesta {
+  id          String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  encuesta_id String    @db.Uuid
+  titulo      String    @db.VarChar(200)
+  descripcion String?   @db.Text
+  orden       Int       @default(0) @db.SmallInt
+
+  encuestas           encuestas @relation(fields: [encuesta_id], references: [id], onDelete: Cascade)
+  preguntas_encuesta  preguntas_encuesta[]
+}
+
+model preguntas_encuesta {
+  id            String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  seccion_id    String    @db.Uuid
+  tipo_id       Int       @db.SmallInt
+  texto         String    @db.Text
+  texto_ayuda   String?   @db.Text
+  obligatoria   Boolean   @default(true)
+  orden         Int       @default(0) @db.SmallInt
+  configuracion Json?
+
+  secciones_encuesta secciones_encuesta @relation(fields: [seccion_id], references: [id], onDelete: Cascade)
+  tipos_pregunta     tipos_pregunta     @relation(fields: [tipo_id], references: [id])
+
+  opciones_pregunta    opciones_pregunta[]
+  respuestas_encuesta  respuestas_encuesta[]
+}
+
+model opciones_pregunta {
+  id          BigInt  @id @default(autoincrement())
+  pregunta_id String  @db.Uuid
+  texto       String  @db.VarChar(300)
+  valor       String? @db.VarChar(50)
+  orden       Int     @default(0) @db.SmallInt
+
+  preguntas_encuesta preguntas_encuesta @relation(fields: [pregunta_id], references: [id], onDelete: Cascade)
+}
+
+model participaciones_encuesta {
+  id              String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  encuesta_id     String    @db.Uuid
+  usuario_id      String?   @db.Uuid
+  token_anonimo   String?   @db.VarChar(64)
+  fecha_inicio    DateTime  @default(now()) @db.Timestamptz
+  fecha_fin       DateTime? @db.Timestamptz
+  completada      Boolean   @default(false)
+  ip_origen       String?
+
+  encuestas encuestas @relation(fields: [encuesta_id], references: [id])
+  usuarios  usuarios? @relation(fields: [usuario_id], references: [id])
+
+  respuestas_encuesta respuestas_encuesta[]
+}
+
+model respuestas_encuesta {
+  id                      BigInt    @id @default(autoincrement())
+  participacion_id        String    @db.Uuid
+  pregunta_id             String    @db.Uuid
+  valor_texto             String?   @db.Text
+  valor_numerico          Decimal?  @db.Decimal(10, 2)
+  opciones_seleccionadas  Json?
+  creado_en               DateTime  @default(now()) @db.Timestamptz
+
+  @@unique([participacion_id, pregunta_id])
+
+  participaciones_encuesta participaciones_encuesta @relation(fields: [participacion_id], references: [id], onDelete: Cascade)
+  preguntas_encuesta       preguntas_encuesta       @relation(fields: [pregunta_id], references: [id])
+}
+
+// ══════════════════════════════════════════════════════════════
+// LOGS Y AUDITORÍA
+// ══════════════════════════════════════════════════════════════
+
+model log_auditoria_sistema {
+  id               BigInt    @id @default(autoincrement())
+  usuario_id       String?   @db.Uuid
+  accion           String    @db.VarChar(20)
+  entidad          String    @db.VarChar(50)
+  entidad_id       String?   @db.Text
+  datos_anteriores Json?
+  datos_nuevos     Json?
+  ip_origen        String?
+  user_agent       String?   @db.Text
+  resultado        String    @default("EXITO") @db.VarChar(10)
+  detalle_error    String?   @db.Text
+  creado_en        DateTime  @default(now()) @db.Timestamptz
+}
+
+model log_sesiones {
+  id               BigInt    @id @default(autoincrement())
+  usuario_id       String    @db.Uuid
+  tipo_evento      String    @db.VarChar(20)
+  ip_origen        String?
+  user_agent       String?   @db.Text
+  duracion_minutos Int?
+  creado_en        DateTime  @default(now()) @db.Timestamptz
+
+  usuarios         usuarios  @relation(fields: [usuario_id], references: [id])
+}
+
+model notificaciones {
+  id            BigInt    @id @default(autoincrement())
+  usuario_id    String    @db.Uuid
+  tipo          String    @db.VarChar(30)
+  titulo        String    @db.VarChar(200)
+  mensaje       String    @db.Text
+  url_accion    String?   @db.VarChar(500)
+  leida         Boolean   @default(false)
+  fecha_lectura DateTime? @db.Timestamptz
+  creado_en     DateTime  @default(now()) @db.Timestamptz
+
+  usuarios      usuarios  @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+}

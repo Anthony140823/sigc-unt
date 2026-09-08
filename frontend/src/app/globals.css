@@ -1,0 +1,256 @@
+/* src/app/globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --brand-primary:   #1D4ED8;
+    --brand-secondary: #1E40AF;
+    --brand-accent:    #3B82F6;
+    --color-verde:    #10B981;
+    --color-amarillo: #F59E0B;
+    --color-rojo:     #EF4444;
+    --radius: 0.5rem;
+    --shadow-sm:  0 1px 2px rgba(0,0,0,.05);
+    --shadow-md:  0 4px 6px -1px rgba(0,0,0,.07), 0 2px 4px -1px rgba(0,0,0,.06);
+    --shadow-lg:  0 10px 15px -3px rgba(0,0,0,.08), 0 4px 6px -2px rgba(0,0,0,.04);
+  }
+
+  .dark {
+    --shadow-sm:  0 1px 2px rgba(0,0,0,.3);
+    --shadow-md:  0 4px 6px -1px rgba(0,0,0,.4), 0 2px 4px -1px rgba(0,0,0,.3);
+    --shadow-lg:  0 10px 15px -3px rgba(0,0,0,.5), 0 4px 6px -2px rgba(0,0,0,.3);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased dark:bg-gray-950 dark:text-gray-100;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+
+  h1, h2, h3, h4, h5, h6 { @apply font-semibold tracking-tight; }
+}
+
+@layer components {
+  /* ── Layout ─────────────────────────────────────────── */
+  .dashboard-shell {
+    @apply grid h-screen min-h-screen overflow-hidden bg-gray-50 dark:bg-gray-950;
+    grid-template-columns: 5rem minmax(0, 1fr);
+  }
+  .dashboard-sidebar {
+    @apply h-full overflow-hidden border-r border-gray-200 bg-white shadow-sm
+           dark:border-gray-800 dark:bg-gray-900;
+  }
+  .sidebar-nav {
+    @apply flex h-full flex-col gap-5 overflow-y-auto px-2 py-4 lg:px-3;
+  }
+  .dashboard-main {
+    @apply flex min-w-0 flex-col overflow-hidden;
+  }
+  .dashboard-topbar {
+    @apply flex flex-none items-center justify-between gap-4 border-b border-gray-200 bg-white px-4 py-3 sm:px-6
+           dark:border-gray-800 dark:bg-gray-900;
+  }
+  .dashboard-content {
+    @apply min-w-0 flex-1 overflow-y-auto p-4 sm:p-6;
+  }
+
+  @media (min-width: 1024px) {
+    .dashboard-shell { grid-template-columns: 18rem minmax(0, 1fr); }
+  }
+
+  /* ── Card ───────────────────────────────────────────── */
+  .card {
+    @apply bg-white rounded-lg border border-gray-200 shadow-sm
+           dark:bg-gray-900 dark:border-gray-800;
+  }
+
+  /* ── Badges ─────────────────────────────────────────── */
+  .badge-verde    { @apply bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-green-900/40 dark:text-green-300; }
+  .badge-amarillo { @apply bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-amber-900/40 dark:text-amber-300; }
+  .badge-rojo     { @apply bg-red-100   text-red-800   text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-red-900/40 dark:text-red-300; }
+  .badge-azul     { @apply bg-blue-100  text-blue-800  text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-blue-900/40 dark:text-blue-300; }
+  .badge-gris     { @apply bg-gray-100  text-gray-700  text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-gray-800 dark:text-gray-300; }
+
+  /* ── Buttons ────────────────────────────────────────── */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg
+           bg-blue-700 text-white text-sm font-medium
+           hover:bg-blue-800 active:bg-blue-900
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
+           disabled:opacity-50 disabled:cursor-not-allowed
+           transition-colors duration-150;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg
+           bg-white text-gray-700 text-sm font-medium border border-gray-300
+           hover:bg-gray-50 active:bg-gray-100
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400
+           disabled:opacity-50 disabled:cursor-not-allowed
+           transition-colors duration-150
+           dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600
+           dark:hover:bg-gray-700 dark:active:bg-gray-600;
+  }
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg
+           bg-red-600 text-white text-sm font-medium
+           hover:bg-red-700 active:bg-red-800
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500
+           disabled:opacity-50 disabled:cursor-not-allowed
+           transition-colors duration-150;
+  }
+
+  /* ── Input ──────────────────────────────────────────── */
+  .input {
+    @apply w-full rounded-lg border border-gray-300 bg-white px-3 py-2
+           text-sm text-gray-900 placeholder-gray-400
+           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+           disabled:bg-gray-100 disabled:cursor-not-allowed
+           transition-shadow duration-150
+           dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600
+           dark:placeholder-gray-500 dark:disabled:bg-gray-700;
+  }
+
+  /* ── Label ──────────────────────────────────────────── */
+  .label {
+    @apply block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300;
+  }
+
+  /* ── Table ──────────────────────────────────────────── */
+  .tabla {
+    @apply w-full text-sm text-gray-700 dark:text-gray-300;
+  }
+  .tabla thead th {
+    @apply px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider
+           bg-gray-50 border-b border-gray-200
+           dark:text-gray-400 dark:bg-gray-800/50 dark:border-gray-700;
+  }
+  .tabla tbody td {
+    @apply px-4 py-3 border-b border-gray-100 align-middle dark:border-gray-800;
+  }
+  .tabla tbody tr:hover {
+    @apply bg-blue-50/40 dark:bg-blue-900/20;
+  }
+  .tabla tbody tr:last-child td { @apply border-b-0; }
+
+  /* ── Sidebar nav items ──────────────────────────────── */
+  .nav-item {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+           text-gray-600 hover:bg-blue-50 hover:text-blue-700
+           transition-colors duration-150 cursor-pointer
+           dark:text-gray-400 dark:hover:bg-blue-900/30 dark:hover:text-blue-300;
+  }
+  .nav-item.active {
+    @apply bg-blue-50 text-blue-700 font-semibold dark:bg-blue-900/30 dark:text-blue-300;
+  }
+
+  /* ── Progress bar ───────────────────────────────────── */
+  .progress-bar {
+    @apply h-2 rounded-full bg-gray-200 overflow-hidden dark:bg-gray-700;
+  }
+  .progress-fill { @apply h-full rounded-full transition-all duration-500; }
+
+  /* ── Skeleton ───────────────────────────────────────── */
+  .skeleton { @apply animate-pulse bg-gray-200 rounded dark:bg-gray-700; }
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #D1D5DB transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar { width: 4px; height: 4px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: #D1D5DB;
+    border-radius: 4px;
+  }
+  .dark .scrollbar-thin {
+    scrollbar-color: #4B5563 transparent;
+  }
+  .dark .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: #4B5563;
+  }
+
+  .truncate-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 1023px) {
+  #main-content { padding-inline: 1rem; }
+}
+
+/* ── Dark mode overrides for common inline utilities ── */
+.dark .bg-white { background-color: #1F2937; }
+.dark .bg-gray-50 { background-color: #111827; }
+.dark .bg-gray-100 { background-color: #1F2937; }
+.dark .bg-blue-50 { background-color: #1E3A5F; }
+.dark .bg-blue-100 { background-color: #1E3A5F; }
+.dark .bg-green-50 { background-color: #064E3B; }
+.dark .bg-red-50 { background-color: #7F1D1D; }
+.dark .bg-amber-50 { background-color: #78350F; }
+.dark .bg-violet-50 { background-color: #3B0764; }
+.dark .bg-emerald-50 { background-color: #064E3B; }
+.dark .bg-purple-50 { background-color: #3B0764; }
+.dark .bg-black\/40 { background-color: rgba(0,0,0,0.7); }
+
+.dark .text-gray-900 { color: #F3F4F6; }
+.dark .text-gray-800 { color: #E5E7EB; }
+.dark .text-gray-700 { color: #D1D5DB; }
+.dark .text-gray-600 { color: #9CA3AF; }
+.dark .text-gray-500 { color: #6B7280; }
+.dark .text-gray-400 { color: #4B5563; }
+.dark .text-blue-600 { color: #60A5FA; }
+.dark .text-blue-700 { color: #93C5FD; }
+.dark .text-blue-800 { color: #BFDBFE; }
+
+.dark .border-gray-100 { border-color: #374151; }
+.dark .border-gray-200 { border-color: #4B5563; }
+.dark .border-gray-300 { border-color: #6B7280; }
+.dark .border-blue-200 { border-color: #1E40AF; }
+.dark .border-red-200 { border-color: #7F1D1D; }
+.dark .border-green-200 { border-color: #064E3B; }
+.dark .border-amber-200 { border-color: #78350F; }
+.dark .border-violet-200 { border-color: #3B0764; }
+.dark .border-emerald-200 { border-color: #064E3B; }
+
+.dark .ring-blue-200 { --tw-ring-color: #1E40AF; }
+.dark .ring-violet-200 { --tw-ring-color: #3B0764; }
+.dark .ring-emerald-200 { --tw-ring-color: #064E3B; }
+.dark .ring-gray-200 { --tw-ring-color: #4B5563; }
+
+.dark .hover\:bg-gray-50:hover { background-color: #1F2937; }
+.dark .hover\:bg-gray-100:hover { background-color: #374151; }
+.dark .hover\:bg-blue-50:hover { background-color: #1E3A5F; }
+.dark .hover\:bg-red-50:hover { background-color: #7F1D1D; }
+.dark .hover\:text-blue-700:hover { color: #93C5FD; }
+.dark .hover\:text-blue-600:hover { color: #60A5FA; }
+.dark .hover\:text-blue-800:hover { color: #BFDBFE; }
+.dark .hover\:text-red-600:hover { color: #F87171; }
+.dark .hover\:shadow-md:hover { box-shadow: var(--shadow-md); }
+.dark .hover\:shadow-lg:hover { box-shadow: var(--shadow-lg); }
+
+.dark .group:hover .group-hover\:text-blue-700 { color: #93C5FD; }
+
+.dark input[type="search"] {
+  background-color: #1F2937;
+  border-color: #4B5563;
+  color: #E5E7EB;
+}
+.dark input[type="search"]::placeholder { color: #6B7280; }
+.dark input[type="search"]:focus {
+  border-color: #3B82F6;
+  --tw-ring-color: #3B82F6;
+}
+
+.dark select { background-color: #1F2937; color: #E5E7EB; border-color: #4B5563; }
+.dark option { background-color: #1F2937; color: #E5E7EB; }
+
+.dark .shadow-sm { box-shadow: var(--shadow-sm); }
+.dark .shadow-md { box-shadow: var(--shadow-md); }
+.dark .shadow-lg { box-shadow: var(--shadow-lg); }

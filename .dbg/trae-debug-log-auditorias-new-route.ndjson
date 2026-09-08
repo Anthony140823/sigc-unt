@@ -1,0 +1,3 @@
+{"sessionId": "auditorias-new-route", "runId": "pre-fix", "hypothesisId": "A", "location": "frontend/src/app/auditorias/page.tsx:new-link", "msg": "[DEBUG] clicked nueva auditoria link", "data": {"href": "/auditorias/nueva"}, "ts": 1779588958250}
+{"sessionId": "auditorias-new-route", "runId": "pre-fix", "hypothesisId": "A", "location": "frontend/src/app/auditorias/page.tsx:new-link", "msg": "[DEBUG] clicked nueva auditoria link", "data": {"href": "/auditorias/nueva"}, "ts": 1779588969131}
+{"sessionId": "auditorias-new-route", "runId": "pre-fix", "hypothesisId": "A", "location": "frontend/src/app/auditorias/page.tsx:new-link", "msg": "[DEBUG] clicked nueva auditoria link", "data": {"href": "/auditorias/nueva"}, "ts": 1779589203150}

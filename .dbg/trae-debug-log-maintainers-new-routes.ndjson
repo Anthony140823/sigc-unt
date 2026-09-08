@@ -1,0 +1,1 @@
+{"sessionId": "maintainers-new-routes", "runId": "pre-fix", "hypothesisId": "A", "location": "frontend/src/app/procesos/page.tsx:new-link", "msg": "[DEBUG] clicked nuevo proceso link", "data": {"href": "/procesos/nuevo"}, "ts": 1779588573158}

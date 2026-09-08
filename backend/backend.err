@@ -1,0 +1,50 @@
+(node:29208) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[31m[Nest] 29272  - [39m05/06/2026, 8:04:41 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mError al crear bucket sigc-documentos:[39m
+[31m[Nest] 29272  - [39m05/06/2026, 8:04:41 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mAggregateError[39m
+[31m[Nest] 29272  - [39m05/06/2026, 8:04:41 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mError al crear bucket sigc-evidencias:[39m
+[31m[Nest] 29272  - [39m05/06/2026, 8:04:41 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mAggregateError[39m
+[31m[Nest] 29272  - [39m05/06/2026, 8:04:41 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mError al crear bucket sigc-reportes:[39m
+[31m[Nest] 29272  - [39m05/06/2026, 8:04:41 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mAggregateError[39m
+[31m[Nest] 28272  - [39m05/06/2026, 8:17:58 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mError al crear bucket sigc-documentos:[39m
+[31m[Nest] 28272  - [39m05/06/2026, 8:17:58 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mAggregateError[39m
+[31m[Nest] 28272  - [39m05/06/2026, 8:17:58 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mError al crear bucket sigc-evidencias:[39m
+[31m[Nest] 28272  - [39m05/06/2026, 8:17:58 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mAggregateError[39m
+[31m[Nest] 28272  - [39m05/06/2026, 8:17:58 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mError al crear bucket sigc-reportes:[39m
+[31m[Nest] 28272  - [39m05/06/2026, 8:17:58 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mAggregateError[39m
+[31m[Nest] 2524  - [39m05/06/2026, 8:18:00 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mError al crear bucket sigc-documentos:[39m
+[31m[Nest] 2524  - [39m05/06/2026, 8:18:00 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mAggregateError[39m
+[31m[Nest] 2524  - [39m05/06/2026, 8:18:00 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mError al crear bucket sigc-evidencias:[39m
+[31m[Nest] 2524  - [39m05/06/2026, 8:18:00 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mAggregateError[39m
+[31m[Nest] 2524  - [39m05/06/2026, 8:18:00 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mError al crear bucket sigc-reportes:[39m
+[31m[Nest] 2524  - [39m05/06/2026, 8:18:00 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mAggregateError[39m
+[31m[Nest] 14972  - [39m05/06/2026, 8:18:10 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mError al crear bucket sigc-documentos:[39m
+[31m[Nest] 14972  - [39m05/06/2026, 8:18:10 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mAggregateError[39m
+[31m[Nest] 14972  - [39m05/06/2026, 8:18:10 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mError al crear bucket sigc-evidencias:[39m
+[31m[Nest] 14972  - [39m05/06/2026, 8:18:10 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mAggregateError[39m
+[31m[Nest] 14972  - [39m05/06/2026, 8:18:10 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mError al crear bucket sigc-reportes:[39m
+[31m[Nest] 14972  - [39m05/06/2026, 8:18:10 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mAggregateError[39m
+[31m[Nest] 12956  - [39m05/06/2026, 8:18:17 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mError al crear bucket sigc-documentos:[39m
+[31m[Nest] 12956  - [39m05/06/2026, 8:18:17 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mAggregateError[39m
+[31m[Nest] 12956  - [39m05/06/2026, 8:18:17 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mError al crear bucket sigc-evidencias:[39m
+[31m[Nest] 12956  - [39m05/06/2026, 8:18:17 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mAggregateError[39m
+[31m[Nest] 12956  - [39m05/06/2026, 8:18:17 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mError al crear bucket sigc-reportes:[39m
+[31m[Nest] 12956  - [39m05/06/2026, 8:18:17 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mAggregateError[39m
+[31m[Nest] 13576  - [39m05/06/2026, 8:18:19 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mError al crear bucket sigc-documentos:[39m
+[31m[Nest] 13576  - [39m05/06/2026, 8:18:19 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mAggregateError[39m
+[31m[Nest] 13576  - [39m05/06/2026, 8:18:19 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mError al crear bucket sigc-evidencias:[39m
+[31m[Nest] 13576  - [39m05/06/2026, 8:18:19 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mAggregateError[39m
+[31m[Nest] 13576  - [39m05/06/2026, 8:18:19 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mError al crear bucket sigc-reportes:[39m
+[31m[Nest] 13576  - [39m05/06/2026, 8:18:19 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mAggregateError[39m
+[31m[Nest] 16764  - [39m05/06/2026, 8:39:05 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mError al crear bucket sigc-documentos:[39m
+[31m[Nest] 16764  - [39m05/06/2026, 8:39:05 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mAggregateError[39m
+[31m[Nest] 16764  - [39m05/06/2026, 8:39:05 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mError al crear bucket sigc-evidencias:[39m
+[31m[Nest] 16764  - [39m05/06/2026, 8:39:05 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mAggregateError[39m
+[31m[Nest] 16764  - [39m05/06/2026, 8:39:05 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mError al crear bucket sigc-reportes:[39m
+[31m[Nest] 16764  - [39m05/06/2026, 8:39:05 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mAggregateError[39m
+[31m[Nest] 30208  - [39m05/06/2026, 8:39:08 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mError al crear bucket sigc-documentos:[39m
+[31m[Nest] 30208  - [39m05/06/2026, 8:39:08 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mAggregateError[39m
+[31m[Nest] 30208  - [39m05/06/2026, 8:39:08 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mError al crear bucket sigc-evidencias:[39m
+[31m[Nest] 30208  - [39m05/06/2026, 8:39:08 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mAggregateError[39m
+[31m[Nest] 30208  - [39m05/06/2026, 8:39:08 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mError al crear bucket sigc-reportes:[39m
+[31m[Nest] 30208  - [39m05/06/2026, 8:39:08 a. m. [31m  ERROR[39m [38;5;3m[MinioService] [39m[31mAggregateError[39m

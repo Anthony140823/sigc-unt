@@ -1,0 +1,11 @@
+// src/modules/capa/capa.module.ts
+import { Module } from '@nestjs/common';
+import { CapaController } from './capa.controller';
+import { CapaService } from './capa.service';
+
+@Module({
+  controllers: [CapaController],
+  providers: [CapaService],
+  exports: [CapaService],
+})
+export class CapaModule {}
